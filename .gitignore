@@ -1,1 +1,32 @@
-.env
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Environment variables
+# .env
+# .env.*
+
+# Poetry
+poetry.lock
+
+# Distribution / packaging
+*.egg-info/
+*.egg
+
+# Logs
+*.log
+
+# Node.js
+node_modules/
+package-lock.json
+
+# macOS
+.DS_Store
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo

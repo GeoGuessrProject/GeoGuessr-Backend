@@ -1,0 +1,82 @@
+version: "3.9"
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - backend-net
+
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    networks:
+      - backend-net
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: geodb
+    networks:
+      - backend-net
+
+  auth_service:
+    build: ./services/auth_service
+    ports:
+      - "8001:8000"
+    depends_on:
+      - rabbitmq
+      - mysql
+    networks:
+      - backend-net
+
+  game_service:
+    build: ./services/game_service
+    ports:
+      - "8002:8000"
+    depends_on:
+      - rabbitmq
+      - mongo
+    networks:
+      - backend-net
+
+  image_service:
+    build: ./services/image_service
+    ports:
+      - "8003:8000"
+    depends_on:
+      - rabbitmq
+    networks:
+      - backend-net
+
+  score_service:
+    build: ./services/score_service
+    ports:
+      - "8004:8000"
+    depends_on:
+      - rabbitmq
+      - mysql
+      - mongo
+    networks:
+      - backend-net
+
+  notification_service:
+    build: ./services/notification_service
+    ports:
+      - "8005:8000"
+    depends_on:
+      - rabbitmq
+    networks:
+      - backend-net
+
+networks:
+  backend-net:
+    driver: bridge
