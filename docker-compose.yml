@@ -32,6 +32,8 @@ services:
     build: ./services/auth_service
     ports:
       - "8001:8000"
+    volumes:
+      - ./services/auth_service:/app
     depends_on:
       - rabbitmq
       - mysql
@@ -42,6 +44,8 @@ services:
     build: ./services/game_service
     ports:
       - "8002:8000"
+    volumes:
+      - ./services/game_service:/app
     depends_on:
       - rabbitmq
       - mongo
@@ -52,6 +56,8 @@ services:
     build: ./services/image_service
     ports:
       - "8003:8000"
+    volumes:
+      - ./services/image_service:/app
     depends_on:
       - rabbitmq
     networks:
@@ -61,6 +67,8 @@ services:
     build: ./services/score_service
     ports:
       - "8004:8000"
+    volumes:
+      - ./services/score_service:/app
     depends_on:
       - rabbitmq
       - mysql
@@ -72,6 +80,8 @@ services:
     build: ./services/notification_service
     ports:
       - "8005:8000"
+    volumes:
+      - ./services/notification_service:/app
     depends_on:
       - rabbitmq
     networks:
