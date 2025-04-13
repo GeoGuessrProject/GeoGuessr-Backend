@@ -16,4 +16,4 @@ app.add_middleware(
 
 @app.get("/")
 def index():
-    return {"message": "Score/Leaderboard Service Ready"}
+    return {"message": "Connected"}

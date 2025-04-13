@@ -16,4 +16,4 @@ app.add_middleware(
 
 @app.get("/")
 def index():
-    return {"message": "Image/Geo Location Service Ready"}
+    return {"message": "Connected"}

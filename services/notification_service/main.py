@@ -16,4 +16,4 @@ app.add_middleware(
 
 @app.get("/")
 def index():
-    return {"message": "Notification/Email Service Ready"}
+    return {"message": "Connected"}

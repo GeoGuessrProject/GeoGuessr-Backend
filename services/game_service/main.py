@@ -17,4 +17,4 @@ app.add_middleware(
 
 @app.get("/")
 def index():
-    return {"message": "Game-sessions Service Ready"}
+    return {"message": "Connected"}
