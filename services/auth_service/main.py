@@ -5,6 +5,7 @@ from db import SessionLocal, engine
 from models import User
 from dotenv import load_dotenv
 from jwt_handler import create_access_token, hash_password, verify_password
+from rabbitmq import send_message
 
 load_dotenv()
 
@@ -63,6 +64,14 @@ async def register(request: Request, db: Session = Depends(get_db)):
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
+        
+        send_message("auth_events", {
+            "event": "user_registered",
+            "username": new_user.username,
+            "email": new_user.email,
+            "country": new_user.country,
+            "age": new_user.age
+        })
 
         return {"message": "Registration successful", "username": new_user.username}
     except Exception as e:
@@ -82,6 +91,11 @@ async def login(request: Request, db: Session = Depends(get_db)):
         user = db.query(User).filter(User.username == username).first()
         if not user or not verify_password(password, user.password):
             raise HTTPException(status_code=401, detail="Invalid credentials")
+        
+        send_message("auth_events", {
+            "event": "user_logged_in",
+            "username": user.username
+        })
 
         token = create_access_token({"sub": user.username})
         return {"access_token": token, "token_type": "bearer", "username": user.username}    
