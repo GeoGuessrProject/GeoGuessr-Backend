@@ -2,45 +2,32 @@ import pika
 import json
 import os
 import threading
-from dotenv import load_dotenv
-from pymongo import MongoClient
 from datetime import datetime, timezone
+from dotenv import load_dotenv
+
+from db import user_states
+from models import new_user_profile
 
 load_dotenv()
 
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "rabbitmq")
 
-mongo_client = MongoClient(os.getenv("MONGO_HOST", "mongo"), 27017)
-db = mongo_client["geodb"]
-user_states = db["user_states"]
 
 def handle_user_registered(data):
-    print(f"[GAME SERVICE] User registered: {data['username']}")
+    username = data["username"]
+    print(f"[GAME SERVICE] User registered: {username}")
     
-    existing = user_states.find_one({"username": data["username"]})
-    if not existing:
-        user_states.insert_one({
-            "username": data["username"],
-            "games_played": 0,
-            "current_game": {
-                "score": 0,
-                "round": 0,
-                "location_history": [],  # could hold coordinates/guesses
-                "start_time": None,
-                "end_time": None
-            },
-            "history": [],  # store past game sessions if you want to track stats
-            "last_login": None,
-            "created_at": datetime.now(timezone.utc)
-        })
-        print(f"[GAME SERVICE] Initialized extended game profile for {data['username']}")
+    if not user_states.find_one({"username": username}):
+        user_states.insert_one(new_user_profile(username))
+        print(f"[GAME SERVICE] Initialized profile for {username}")
 
 
 def handle_user_logged_in(data):
-    print(f"[GAME SERVICE] User logged in: {data['username']}")
+    username = data["username"]
+    print(f"[GAME SERVICE] User logged in: {username}")
     
     user_states.update_one(
-        {"username": data["username"]},
+        {"username": username},
         {"$set": {"last_login": datetime.now(timezone.utc)}},
         upsert=True
     )
@@ -49,30 +36,29 @@ def handle_user_logged_in(data):
 def callback(ch, method, properties, body):
     try:
         message = json.loads(body)
-        event_type = message.get("event")
+        event = message.get("event")
 
-        if event_type == "user_registered":
-            handle_user_registered(message)
-        elif event_type == "user_logged_in":
-            handle_user_logged_in(message)
-        else:
-            print(f"[GAME SERVICE] Unknown event: {event_type}")
+        match event:
+            case "user_registered":
+                handle_user_registered(message)
+            case "user_logged_in":
+                handle_user_logged_in(message)
+            case _:
+                print(f"[GAME SERVICE] Unknown event type: {event}")
     except Exception as e:
         print(f"[GAME SERVICE] Error processing message: {e}")
+
 
 def start_listening():
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
     channel = connection.channel()
-
     channel.queue_declare(queue="auth_events", durable=True)
-
     channel.basic_consume(queue="auth_events", on_message_callback=callback, auto_ack=True)
 
     print("[GAME SERVICE] Listening to auth_events...")
     channel.start_consuming()
 
-# Run this in a thread so it doesn't block the FastAPI app
+
 def start_consumer_thread():
-    thread = threading.Thread(target=start_listening)
-    thread.daemon = True
+    thread = threading.Thread(target=start_listening, daemon=True)
     thread.start()

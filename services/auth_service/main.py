@@ -98,7 +98,15 @@ async def login(request: Request, db: Session = Depends(get_db)):
         })
 
         token = create_access_token({"sub": user.username})
-        return {"access_token": token, "token_type": "bearer", "username": user.username}    
+        
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "username": user.username,
+            "email": user.email,
+            "country": user.country,
+            "age": user.age,
+        }    
     except Exception as e:
         import traceback
         traceback.print_exc()
