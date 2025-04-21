@@ -1,4 +1,4 @@
-from db import user_states
+from app.db import user_states
 from datetime import datetime, timezone
 
 def get_user(username):

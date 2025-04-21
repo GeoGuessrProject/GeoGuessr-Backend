@@ -5,8 +5,8 @@ import threading
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 
-from db import user_states
-from models import new_user_profile
+from app.db import user_states
+from app.models import new_user_profile
 
 load_dotenv()
 

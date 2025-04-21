@@ -1,11 +1,11 @@
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from db import SessionLocal, engine
-from models import User
+from app.db import SessionLocal, engine, Base
+from app.models import User
 from dotenv import load_dotenv
-from jwt_handler import create_access_token, hash_password, verify_password
-from rabbitmq import send_message
+from app.jwt_handler import create_access_token, hash_password, verify_password
+from app.rabbitmq import send_message
 
 load_dotenv()
 
@@ -24,7 +24,6 @@ def index():
     return {"message": "Connected"}
 
 # Create DB tables
-from db import Base
 Base.metadata.create_all(bind=engine)
 
 def get_db():
