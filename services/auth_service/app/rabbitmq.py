@@ -13,7 +13,7 @@ def init_rabbitmq():
     global connection, channel
     try:
         connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host=RABBITMQ_HOST)
+            pika.ConnectionParameters(host=RABBITMQ_HOST, heartbeat=30)
         )
         channel = connection.channel()
         print("[AUTH SERVICE] Connected to RabbitMQ.")

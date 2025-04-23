@@ -8,6 +8,11 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - backend-net
 
@@ -15,6 +20,11 @@ services:
     image: mongo
     ports:
       - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - backend-net
 
@@ -25,53 +35,11 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: geodb
-    networks:
-      - backend-net
-
-  game_service:
-    build: ./services/game_service
-    ports:
-      - "8002:8000"
-    volumes:
-      - ./services/game_service:/app
-    depends_on:
-      - rabbitmq
-      - mongo
-    networks:
-      - backend-net
-
-  image_service:
-    build: ./services/image_service
-    ports:
-      - "8003:8000"
-    volumes:
-      - ./services/image_service:/app
-    depends_on:
-      - rabbitmq
-    networks:
-      - backend-net
-
-  score_service:
-    build: ./services/score_service
-    ports:
-      - "8004:8000"
-    volumes:
-      - ./services/score_service:/app
-    depends_on:
-      - rabbitmq
-      - mysql
-      - mongo
-    networks:
-      - backend-net
-
-  notification_service:
-    build: ./services/notification_service
-    ports:
-      - "8005:8000"
-    volumes:
-      - ./services/notification_service:/app
-    depends_on:
-      - rabbitmq
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - backend-net
 
@@ -81,9 +49,78 @@ services:
       - "8001:8000"
     volumes:
       - ./services/auth_service:/app
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      MYSQL_USER: root
+      MYSQL_PASSWORD: rootpassword
+      MYSQL_DATABASE: geodb
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      JWT_SECRET_KEY: verysecretkey1234
     depends_on:
-      - rabbitmq
-      - mysql
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - backend-net
+
+  game_service:
+    build: ./services/game_service
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./services/game_service:/app
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      DB_HOST: localhost
+      DB_PORT: 3306
+      MONGO_URI: mongodb://mongo:27017
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - backend-net
+
+  image_service:
+    build: ./services/image_service
+    ports:
+      - "8003:8000"
+    volumes:
+      - ./services/image_service:/app
+    environment:
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - backend-net
+
+  score_service:
+    build: ./services/score_service
+    ports:
+      - "8004:8000"
+    volumes:
+      - ./services/score_service:/app
+    environment:
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - backend-net
+
+  notification_service:
+    build: ./services/notification_service
+    ports:
+      - "8005:8000"
+    volumes:
+      - ./services/notification_service:/app
+    environment:
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks:
       - backend-net
 

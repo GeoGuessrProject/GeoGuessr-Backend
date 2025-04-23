@@ -50,7 +50,7 @@ def callback(ch, method, properties, body):
 
 
 def start_listening():
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST, heartbeat=30))
     channel = connection.channel()
     channel.queue_declare(queue="auth_events", durable=True)
     channel.basic_consume(queue="auth_events", on_message_callback=callback, auto_ack=True)
