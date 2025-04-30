@@ -43,4 +43,6 @@ async def make_guess(username: str, request: Request):
 def end_game(username: str):
     return end_game_for_user(username)
 
-start_consumer_thread()
+@app.on_event("startup")
+def startup_event():
+    start_consumer_thread()

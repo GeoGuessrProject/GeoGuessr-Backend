@@ -53,7 +53,7 @@ def start_listening():
     channel = connection.channel()
     channel.queue_declare(queue="auth_events", durable=True)
     channel.basic_consume(queue="auth_events", on_message_callback=callback, auto_ack=True)
-
+    print(f"[GAME SERVICE] Connected to RabbitMQ on host {RABBITMQ_HOST}")
     print("[GAME SERVICE] Listening to auth_events...")
     channel.start_consuming()
 
