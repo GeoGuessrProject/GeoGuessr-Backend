@@ -4,7 +4,6 @@ import os
 import threading
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-
 from app.db import user_states
 from app.models import new_user_profile
 

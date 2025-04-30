@@ -1,6 +1,7 @@
 from app.db import user_states
 from datetime import datetime, timezone
 
+
 def get_user(username):
     return user_states.find_one({"username": username})
 
@@ -66,4 +67,4 @@ def end_game_for_user(username):
             }
         }
     )
-    return {"message": "Game ended and saved"}
+    return {"message": "Game ended"}
