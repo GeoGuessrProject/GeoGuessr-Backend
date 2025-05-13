@@ -19,9 +19,9 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-@app.get("/")
-def index():
-    return {"message": "Connected"}
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 # Create DB tables
 Base.metadata.create_all(bind=engine)
