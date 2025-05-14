@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.message_handler import start_consumer_thread
-from app.db import user_states
-from app.game_logic import get_user, start_game_for_user, update_guess, end_game_for_user
+from services.game_service.app.message_handler import start_consumer_thread
+from services.game_service.app.db import user_states
+from services.game_service.app.game_logic import get_user, start_game_for_user, update_guess, end_game_for_user
 
 app = FastAPI()
 
