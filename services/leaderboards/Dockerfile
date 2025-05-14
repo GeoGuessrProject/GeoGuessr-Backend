@@ -9,7 +9,10 @@ RUN pip install --no-cache-dir \
     celery \
     pymongo \
     redis \
-    python-dotenv
+    python-dotenv \
+    uvicorn \
+    fastapi \
+    motor
 
 # Optional if you expose Flask API
 EXPOSE 8000

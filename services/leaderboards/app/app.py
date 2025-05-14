@@ -1,47 +1,29 @@
-# app.py
-from flask import Flask, request, jsonify
-from datetime import datetime
+from __future__ import annotations
 
-# Mock in-memory database
-scores = []
+from typing import Any, List
 
-def create_app():
-    app = Flask(__name__)
-    app.config.from_object('config.Config')
+from fastapi import Depends, FastAPI
+from pydantic import BaseModel
 
-    @app.post("/submit")
-    def submit():
-        data = request.get_json()
-        if not data:
-            return {"error": "JSON required"}, 400
-        # Upsert logic for in-memory database
-        for score in scores:
-            if score["username"] == data["username"]:
-                score.update({
-                    "email": data["email"],
-                    "score": data["score"],
-                    "ts": datetime.now()
-                })
-                break
-        else:
-            scores.append({
-                "username": data["username"],
-                "email": data["email"],
-                "score": data["score"],
-                "ts": datetime.now()
-            })
-        # Sort in-memory database
-        scores.sort(key=lambda x: (-x["score"], x["ts"]))
-        return {"ok": True}, 201
+from .db import get_scores
+from pymongo.collection import Collection
 
-    @app.get("/top10")
-    def top10():
-        # Get the top 10 scores sorted by score (descending) and timestamp (ascending)
-        top = sorted(scores, key=lambda x: (-x["score"], x["ts"]))[:10]
-        # Hide email before returning to clients
-        for doc in top:
-            doc.pop("email", None)
-        return jsonify(top)
+app = FastAPI(title="GeoGuessr Leaderboards")
 
-    if __name__ == "__main__":
-        app.run(debug=True)
+
+class ScoreOut(BaseModel):
+    user_id: str
+    username: str
+    score: int
+
+
+@app.get("/top10", response_model=List[ScoreOut])
+async def read_top10(scores: Collection = Depends(get_scores)) -> List[dict[str, Any]]: # noqa: D401
+    """Return the live Top 10, sorted by score descending."""
+    pipeline = [
+        {"$setWindowFields": {"sortBy": {"score": -1}, "output": {"rank": {"$rank": {}}}}},
+        {"$match": {"rank": {"$lte": 10}}},
+        {"$project": {"_id": 0, "user_id": 1, "username": 1, "score": 1}},
+    ]
+    cursor = scores.aggregate(pipeline)
+    return [doc async for doc in cursor]

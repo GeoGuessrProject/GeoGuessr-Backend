@@ -1,179 +1,137 @@
 version: "3.9"
+
 services:
-  rabbitmq:
-    image: rabbitmq:3-management
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - backend-net
-
-  mongo:
-    image: mongo
-    ports:
-      - "27017:27017"
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - backend-net
-
+  # ─── MySQL (for auth_service) ──────────────────────────
   mysql:
     image: mysql:8.0
-    ports:
-      - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: geodb
+      MYSQL_ROOT_PASSWORD: "${MYSQL_PASSWORD:-rootpassword}"
+      MYSQL_DATABASE:    "${MYSQL_DATABASE:-geodb}"
+      MYSQL_USER:        "${MYSQL_USER:-root}"
+      MYSQL_PASSWORD:    "${MYSQL_PASSWORD:-rootpassword}"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - backend-net
 
+  # ─── MongoDB (for game_service + leaderboards) ─────────
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+  # ─── Redis (for Celery backend) ────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  # ─── RabbitMQ (for all events) ─────────────────────────
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    restart: unless-stopped
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Auth Service ─────────────────────────────────────
   auth_service:
     build: ./services/auth_service
-    ports:
-      - "8001:8000"
-    volumes:
-      - ./services/auth_service:/app
+    env_file:
+      - .env
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001
     environment:
-      RABBITMQ_HOST: rabbitmq
-      MYSQL_USER: root
-      MYSQL_PASSWORD: rootpassword
-      MYSQL_DATABASE: geodb
-      MYSQL_HOST: mysql
-      MYSQL_PORT: 3306
-      JWT_SECRET_KEY: verysecretkey1234
+      MYSQL_HOST:     mysql
+      MYSQL_USER:     "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      RABBITMQ_HOST:  rabbitmq
     depends_on:
       mysql:
         condition: service_healthy
       rabbitmq:
-        condition: service_healthy
-    networks:
-      - backend-net
+        condition: service_started
+    ports:
+      - "8001:8001"
 
+  # ─── Game Service ─────────────────────────────────────
   game_service:
     build: ./services/game_service
-    ports:
-      - "8002:8000"
-    volumes:
-      - ./services/game_service:/app
+    env_file:
+      - .env
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8002
     environment:
+      MONGO_URI:     mongodb://mongo:27017
       RABBITMQ_HOST: rabbitmq
-      DB_HOST: localhost
-      DB_PORT: 3306
-      MONGO_URI: mongodb://mongo:27017
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - backend-net
+      - mongo
+      - rabbitmq
+    ports:
+      - "8002:8002"
 
+  # ─── Image Service ────────────────────────────────────
   image_service:
     build: ./services/image_service
-    ports:
-      - "8003:8000"
-    volumes:
-      - ./services/image_service:/app
-    environment:
-      RABBITMQ_HOST: rabbitmq
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - backend-net
-
-  score_service:
-    build: ./services/score_service
-    ports:
-      - "8004:8000"
-    volumes:
-      - ./services/score_service:/app
-    environment:
-      RABBITMQ_HOST: rabbitmq
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - backend-net
-
-  notification_service:
-    build: ./services/notification_service
-    ports:
-      - "8005:8000"
-    volumes:
-      - ./services/notification_service:/app
-    environment:
-      RABBITMQ_HOST: rabbitmq
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - backend-net
-
-  leaderboard_service:
-    build: ./services/leaderboards
-    ports:
-      - "8006:8000"  # Optional: if you want API access
-    volumes:
-      - ./services/leaderboards:/app
+    env_file:
+      - .env
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8003
     environment:
       MONGO_URI: mongodb://mongo:27017
-      MAIL_HOST: smtp.mailgun.org
-      MAIL_PORT: 587
-      MAIL_USER: postmaster@sandboxNNN.mailgun.org
-      MAIL_PASS: your-smtp-password
-      FROM_ADDR: noreply@mygame.com
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_USER: guest
-      RABBITMQ_PASS: guest
-      CHECK_FREQ: 30
     depends_on:
-      mongo:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - backend-net
+      - mongo
+    ports:
+      - "8003:8003"
 
+  # ─── Leaderboards API ────────────────────────────────
+  leaderboards_api:
+    build: ./services/leaderboards
+    env_file:
+      - .env
+    command: uvicorn app.app:app --host 0.0.0.0 --port 8000
+    environment:
+      MONGO_URI:     mongodb://mongo:27017/geo
+      REDIS_HOST:    redis
+      RABBITMQ_HOST: rabbitmq
+      MAIL_USER:     "${MAIL_USER}"
+      MAIL_PASS:     "${MAIL_PASS}"
+    depends_on:
+      - mongo
+      - rabbitmq
+    ports:
+      - "8000:8000"
+
+  # ─── Leaderboards Celery Worker + Beat ───────────────
   leaderboard_worker:
     build: ./services/leaderboards
+    env_file:
+      - .env
     command: celery -A app.tasks worker --beat --loglevel=info
     environment:
-      REDITS_HOST: redis
-      MONGO_URI: mongodb://mongo:27017
+      MONGO_URI:     mongodb://mongo:27017/geo
+      REDIS_HOST:    redis
       RABBITMQ_HOST: rabbitmq
-      RABBITMQ_USER: guest
-      RABBITMQ_PASS: guest
-      MAIL_HOST: smtp.mailgun.org
-      MAIL_PORT: 587
-      MAIL_USER: postmaster@sandboxNNN.mailgun.org
-      MAIL_PASS: your-smtp-password
-      FROM_ADDR: noreply@mygame.com
-      CHECK_FREQ: 30
+      MAIL_USER:     "${MAIL_USER}"
+      MAIL_PASS:     "${MAIL_PASS}"
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      mongo:
-        condition: service_healthy
-    networks:
-      - backend-net
+      - rabbitmq
+      - redis
+      - mongo
 
-
-
-networks:
-  backend-net:
-    driver: bridge
+volumes:
+  mongo_data:
+  mysql_data:
