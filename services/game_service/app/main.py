@@ -36,8 +36,10 @@ def start_game(username: str):
 async def make_guess(username: str, request: Request):
     data = await request.json()
     guess = data.get("guess", "")
-    correct = update_guess(username, guess)
+    correct_answer = data.get("correctAnswer", "")
+    correct = update_guess(username, guess, correct_answer)
     return {"correct": correct, "message": "Guess processed"}
+
 
 @app.post("/user/{username}/end-game")
 def end_game(username: str):
