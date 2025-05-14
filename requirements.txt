@@ -1,0 +1,11 @@
+# core
+Flask>=3.0          # only if your game API is Flask; otherwise keep FastAPI etc.
+pymongo[srv]>=4.7
+python-dotenv>=1.0
+
+# messaging & workers
+celery>=5.4
+redis>=5.0          # Celery broker / Redis client in tasks.py
+pika>=1.3.2         # RabbitMQ client
+
+# e-mail

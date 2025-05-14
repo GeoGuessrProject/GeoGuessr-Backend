@@ -9,7 +9,7 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -123,6 +123,56 @@ services:
         condition: service_healthy
     networks:
       - backend-net
+
+  leaderboard_service:
+    build: ./services/leaderboards
+    ports:
+      - "8006:8000"  # Optional: if you want API access
+    volumes:
+      - ./services/leaderboards:/app
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MAIL_HOST: smtp.mailgun.org
+      MAIL_PORT: 587
+      MAIL_USER: postmaster@sandboxNNN.mailgun.org
+      MAIL_PASS: your-smtp-password
+      FROM_ADDR: noreply@mygame.com
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: guest
+      RABBITMQ_PASS: guest
+      CHECK_FREQ: 30
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - backend-net
+
+  leaderboard_worker:
+    build: ./services/leaderboards
+    command: celery -A app.tasks worker --beat --loglevel=info
+    environment:
+      REDITS_HOST: redis
+      MONGO_URI: mongodb://mongo:27017
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: guest
+      RABBITMQ_PASS: guest
+      MAIL_HOST: smtp.mailgun.org
+      MAIL_PORT: 587
+      MAIL_USER: postmaster@sandboxNNN.mailgun.org
+      MAIL_PASS: your-smtp-password
+      FROM_ADDR: noreply@mygame.com
+      CHECK_FREQ: 30
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    networks:
+      - backend-net
+
+
 
 networks:
   backend-net:

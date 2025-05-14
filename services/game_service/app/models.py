@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
 
-def new_user_profile(username):
+def new_user_profile(username, email):
     return {
         "username": username,
+        "email": email,
         "games_played": 0,
         "total_score": 0,
         "average_score": 0,

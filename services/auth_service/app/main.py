@@ -5,7 +5,7 @@ from app.db import SessionLocal, engine, Base
 from app.models import User
 from dotenv import load_dotenv
 from app.jwt_handler import create_access_token, hash_password, verify_password
-from app.rabbitmq import send_message
+from app.rabbitmq_auth import send_message
 
 load_dotenv()
 
