@@ -4,8 +4,8 @@ import os
 import threading
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-from services.game_service.app.db import user_states
-from services.game_service.app.models import new_user_profile
+from app.db import user_states
+from app.models import new_user_profile
 
 load_dotenv()
 
