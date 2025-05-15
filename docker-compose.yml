@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   rabbitmq:
     image: rabbitmq:3-management
@@ -16,17 +15,17 @@ services:
     networks:
       - backend-net
 
-  mongo:
-    image: mongo
-    ports:
-      - "27017:27017"
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - backend-net
+  # mongo:
+  #   image: mongo
+  #   ports:
+  #     - "27017:27017"
+  #   healthcheck:
+  #     test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - backend-net
 
   mysql:
     image: mysql:8.0
@@ -71,11 +70,8 @@ services:
       - "8002:8000"
     volumes:
       - ./services/game_service:/app
-    environment:
-      RABBITMQ_HOST: rabbitmq
-      DB_HOST: localhost
-      DB_PORT: 3306
-      MONGO_URI: mongodb://mongo:27017
+    env_file:
+      - .env
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -88,8 +84,8 @@ services:
       - "8003:8000"
     volumes:
       - ./services/image_service:/app
-    environment:
-      RABBITMQ_HOST: rabbitmq
+    env_file:
+      - .env
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -102,8 +98,8 @@ services:
       - "8004:8000"
     volumes:
       - ./services/score_service:/app
-    environment:
-      RABBITMQ_HOST: rabbitmq
+    env_file:
+      - .env
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -116,8 +112,8 @@ services:
       - "8005:8000"
     volumes:
       - ./services/notification_service:/app
-    environment:
-      RABBITMQ_HOST: rabbitmq
+    env_file:
+      - .env
     depends_on:
       rabbitmq:
         condition: service_healthy
