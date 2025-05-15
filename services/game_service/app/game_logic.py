@@ -19,8 +19,8 @@ def start_game_for_user(username):
         }}
     )
 
-def update_guess(username, guess):
-    correct = guess.lower() == "paris"
+def update_guess(username, guess, correct_answer):
+    correct = guess.strip().lower() == correct_answer.strip().lower()
     score_delta = 100 if correct else 0
 
     user_states.update_one(

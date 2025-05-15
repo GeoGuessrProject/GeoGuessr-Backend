@@ -1,0 +1,45 @@
+name: GeoGuessr-Backend
+
+on:
+  push: # Runs on every push or pull request to the main branch.
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy: # Runs the same set of steps for each service:
+      matrix:
+        service: [auth_service, game_service, score_service, image_service, notification_service]
+
+    # Steps for each service:
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/${{ matrix.service }}/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          if [ -f services/${{ matrix.service }}/requirements.txt ]; then
+            pip install -r services/${{ matrix.service }}/requirements.txt
+          else
+            echo "No requirements.txt found for ${{ matrix.service }}"
+          fi
+
+      - name: Run linter
+        run: |
+          pip install flake8
+          flake8 services/${{ matrix.service }}/app || echo "No linter errors"

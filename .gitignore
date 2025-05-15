@@ -5,8 +5,7 @@ __pycache__/
 *.pyd
 
 # Environment variables
-# .env
-# .env.*
+.env
 
 # Poetry
 poetry.lock
@@ -30,3 +29,6 @@ package-lock.json
 .idea/
 *.swp
 *.swo
+
+
+.venv/
