@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: auth
-        image: auth_service:latest
+        image: vhanert/geoguessr-backend-auth_service:latest
         ports:
         - containerPort: 8000
         env:
@@ -32,8 +32,6 @@ spec:
           value: "3306"
         - name: JWT_SECRET_KEY
           value: "verysecretkey1234"
-        - name: MONGO_URI
-          value: "mongodb://mongo:27017"
 ---
 apiVersion: v1
 kind: Service
