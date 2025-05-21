@@ -1,0 +1,9 @@
+Hej {username},
+
+Du er desværre røget ud af Top 10 på leaderboardet.
+
+Kom tilbage og kæmp dig op igen 💪  
+Din nuværende placering er {rank}.
+
+Vi hepper på dig!  
+GeoGuessr Teamet
