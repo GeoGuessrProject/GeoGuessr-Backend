@@ -1,0 +1,76 @@
+name: Deploy to Azure Kubernetes
+
+# ──────────────────────────────────────────────────────────────
+on:
+  push:
+    branches: [main]         # deploy every commit on main
+  workflow_dispatch:         # manual trigger (optional)
+
+# ──────────────────────────────────────────────────────────────
+env:
+  ACR_NAME: geoguessr                       # <── your ACR name
+  RESOURCE_GROUP: geogussrResourceGroup     # <── AKS RG
+  CLUSTER_NAME: geoguessrCluster            # <── AKS name
+  IMAGE_TAG: ${{ github.sha }}              # immutable tag per commit
+  SERVICES: |
+    auth_service
+    game_service
+    image_service
+    notification_service
+    score_service
+  # mysql & rabbitmq use the official Docker Hub images – no build!
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1️⃣  Checkout
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 2️⃣  Azure login (SP creds are stored in repo → Settings → Secrets)
+    - name: Azure CLI login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # 3️⃣  Enable Docker Buildx (multi-arch builder)
+    - name: Set up Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # 4️⃣  Log in Docker to ACR
+    - name: ACR login
+      run: az acr login --name $ACR_NAME
+
+    # 5️⃣  Build + push every custom micro-service
+    - name: Build & push images
+      shell: bash
+      run: |
+        ACR_LOGIN_SERVER="${ACR_NAME}.azurecr.io"
+        while IFS= read -r svc; do
+          echo "🚀 Building $svc"
+          docker buildx build \
+            --platform linux/amd64 \
+            -t ${ACR_LOGIN_SERVER}/geoguessr-backend-${svc}:latest \
+            -t ${ACR_LOGIN_SERVER}/geoguessr-backend-${svc}:${IMAGE_TAG} \
+            ./services/${svc} \
+            --push
+        done <<< "$SERVICES"
+
+    # 6️⃣  Set kubectl context (uses same SP creds)
+    - name: Set AKS context
+      uses: azure/aks-set-context@v3
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        resource-group: ${{ env.RESOURCE_GROUP }}
+        cluster-name:   ${{ env.CLUSTER_NAME }}
+
+    # 7️⃣  Apply manifests & wait for roll-out
+    - name: Deploy to AKS
+      run: |
+        kubectl apply -f kubernetes/
+
+        for d in auth-service game-service image-service notification-service score-service; do
+          kubectl rollout status deployment/$d --timeout=90s
+        done
