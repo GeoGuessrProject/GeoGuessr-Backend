@@ -49,7 +49,8 @@ jobs:
       shell: bash
       run: |
         set -euo pipefail
-        while IFS= read -r svc; do
+        while IFS= read -r svc || [[ -n "$svc" ]]; do
+          [[ -z "$svc" ]] && continue
           echo "🚀 Building $svc ..."
           docker buildx build \
             --platform linux/amd64 \
@@ -70,7 +71,6 @@ jobs:
       run: |
         set -euo pipefail
         kubectl apply -f kubernetes/
-        # Wait for key deployments to become Ready (90-second timeout each)
         for d in auth-service game-service image-service notification-service score-service; do
           echo "⏳ Waiting for $d rollout…"
           kubectl rollout status deployment/$d --timeout=90s
