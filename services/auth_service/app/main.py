@@ -110,4 +110,3 @@ async def login(request: Request, db: Session = Depends(get_db)):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
