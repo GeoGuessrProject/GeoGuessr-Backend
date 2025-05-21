@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: game-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: game-service
+  template:
+    metadata:
+      labels:
+        app: game-service
+    spec:
+      imagePullSecrets:
+        - name: acr-secret
+      containers:
+        - name: game
+          image: geoguessr.azurecr.io/geoguessr-backend-game_service:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: RABBITMQ_HOST
+              value: "rabbitmq"
+            - name: MONGO_URI
+              value: "mongodb+srv://user:password1234@cluster0.qxjgzph.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: game-service
+spec:
+  selector:
+    app: game-service
+  type: LoadBalancer
+  ports:
+    - name: "8002"
+      port: 8002
+      targetPort: 8000
+---

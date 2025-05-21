@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: score-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: score-service
+  template:
+    metadata:
+      labels:
+        app: score-service
+    spec:
+      imagePullSecrets:
+        - name: acr-secret
+      containers:
+        - name: score
+          image: geoguessr.azurecr.io/geoguessr-backend-score_service:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: RABBITMQ_HOST
+              value: "rabbitmq"
+            - name: MONGO_URI
+              value: "mongodb+srv://user:password1234@cluster0.qxjgzph.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: score-service
+spec:
+  selector:
+    app: score-service
+  type: ClusterIP
+  ports:
+    - name: "8004"
+      port: 8004
+      targetPort: 8000
+---
