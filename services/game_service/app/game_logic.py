@@ -67,4 +67,12 @@ def end_game_for_user(username):
             }
         }
     )
-    return {"message": "Game ended"}
+    return {
+        "message": "Game ended",
+        "username": user["username"],
+        "email": user["email"],
+        "new_score": current_game["score"],
+        }
+
+
+

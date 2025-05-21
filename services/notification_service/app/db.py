@@ -1,16 +1,15 @@
 import os
+from pymongo.mongo_client import MongoClient
+from pymongo.server_api import ServerApi
 from dotenv import load_dotenv
-from pymongo import MongoClient
 
 load_dotenv()
 
-client = MongoClient(os.getenv("MONGODB_URI"))       # 1 env var for every svc
-db      = client["geoguessr"]                        # ← same DB everywhere
+mongo_uri = os.getenv("MONGO_URI")
+mongo_client = MongoClient(mongo_uri, server_api=ServerApi('1'))
 
-scores  = db["scores"]       # new collection you asked for
+db = mongo_client["geodb"]
 
+# Only access collections relevant for this service:
+user_states = db["user_states"]    # new collection you asked for
 
-scores.create_index(
-    [("score", -1), ("created_at", 1)],
-    name="score_rank_idx"
-)
