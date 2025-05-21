@@ -1,4 +1,4 @@
-name: GeoGuessr-Backend
+name: Continuous Integration (CI)
 
 on:
   push: # Runs on every push or pull request to the main branch.
