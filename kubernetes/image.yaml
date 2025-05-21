@@ -13,15 +13,34 @@ spec:
         app: image-service
     spec:
       imagePullSecrets:
-              - name: acr-secret
+        - name: acr-secret
       containers:
-      - name: image
-        image: geoguessr.azurecr.io/geoguessr-backend-image_service:latest
-        ports:
-        - containerPort: 8000
-        env:
-        - name: RABBITMQ_HOST
-          value: "rabbitmq"
+        - name: image
+          image: geoguessr.azurecr.io/geoguessr-backend-image_service:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: RABBITMQ_HOST
+              value: "rabbitmq"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
 ---
 apiVersion: v1
 kind: Service
@@ -30,7 +49,9 @@ metadata:
 spec:
   selector:
     app: image-service
+  type: ClusterIP
   ports:
     - name: "8003"
       port: 8003
       targetPort: 8000
+---
