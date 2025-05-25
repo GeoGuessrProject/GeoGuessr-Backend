@@ -1,6 +1,6 @@
 import os, json, pika
 from db import user_states           # same shared db.py
-from mail import send_email  
+from services.notification_service.app.mildertidig.mail import send_email  
 from datetime import datetime
    # your existing SMTP helper
 
@@ -31,6 +31,8 @@ def on_message(ch, method, props, body):
             f"Your score of {bumped['total_score']} just got overtaken—you’re now #11. Time for a rematch!\n\n— The Team"
           )
         )
+
+    print(f"[Notification] Sent Top-10 drop email to {bumped['username']}" if in_top10 else "[Notification] No Top-10 drop email sent")
 
     # 3) ACK the message so RabbitMQ can delete it
     ch.basic_ack(delivery_tag=method.delivery_tag)

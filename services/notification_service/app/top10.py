@@ -1,51 +1,52 @@
-import os, json, datetime, pika
-from bson import ObjectId
-from db import scores                                   # ← import shared conn
+# top10.py
 
-AMQP_URL = os.getenv("AMQP_URL")
+from datetime import datetime
 
-def current_top10():
-    return list(
-        scores.find().sort([("score", -1), ("created_at", 1)]).limit(10)
-    )
+# this will be set by process_event so main.py can pick it up
+latest_top10 = []
 
-def main():
-    conn = pika.BlockingConnection(pika.URLParameters(AMQP_URL))
-    ch   = conn.channel()
+def process_event(evt, user_states, load_prev):
+    """
+    evt: {username, email, score, end_time}
+    user_states: pymongo collection
+    load_prev: fn() -> [prev_top10_usernames]
+    """
+    player   = evt["username"]
+    prev     = set(load_prev())
 
-    ch.queue_declare(queue="game.finished",      durable=True)
-    ch.queue_declare(queue="leaderboard.dropped", durable=True)
-
-    def callback(ch, method, properties, body):
-        msg = json.loads(body)
-        before = current_top10()
-
-        scores.insert_one({
-            "user_id":   ObjectId(msg["user_id"]),
-            "username":  msg["username"],
-            "score":     int(msg["score"]),
-            "created_at": datetime.datetime.fromisoformat(msg["created_at"])
+    # recompute current top10
+    docs = list(
+      user_states
+        .find({}, {
+           "username":1,
+           "email":1,
+           "total_score":1,
+           "last_end_time":1
         })
+        .sort([
+           ("total_score", -1),
+           ("last_end_time", 1)
+        ])
+        .limit(10)
+    )
+    new_top10 = [d["username"] for d in docs]
+    global latest_top10
+    latest_top10 = new_top10
 
-        after = current_top10()
-
-        lost_ids = {d["_id"] for d in before} - {d["_id"] for d in after}
-        for lost in scores.find({"_id": {"$in": list(lost_ids)}}):
-            ch.basic_publish(
-                exchange="",
-                routing_key="leaderboard.dropped",
-                body=json.dumps({
-                    "user_id": str(lost["user_id"]),
-                    "username": lost["username"],
-                    "score":    lost["score"]
-                }),
-                properties=pika.BasicProperties(delivery_mode=2)
+    # did player newly enter?
+    if player in new_top10 and player not in prev:
+        # who dropped?
+        dropped = [u for u in prev if u not in new_top10]
+        emails = []
+        for victim in dropped:
+            vdoc = user_states.find_one({"username": victim})
+            subject = "You fell out of the Top 10!"
+            body    = (
+              f"Hi {victim},\n\n"
+              f"Your score of {vdoc['total_score']} was just overtaken—you’re now #11.\n"
+              "Time for a rematch!\n\n— The Team"
             )
-        ch.basic_ack(method.delivery_tag)
+            emails.append((vdoc["email"], subject, body))
+        return emails
 
-    ch.basic_qos(prefetch_count=10)
-    ch.basic_consume("game.finished", callback)
-    ch.start_consuming()
-
-if __name__ == "__main__":
-    main()
+    return []
