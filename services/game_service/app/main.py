@@ -50,23 +50,28 @@ def end_game(username: str):
 
     result = end_game_for_user(username)
 
-     # 1) publish a persistent RabbitMQ message
+    client_msg = {"message": result["message"]}
+
+     # RabbitMQ payload
+    payload = {
+        "username": result["username"],
+        "email":    result["email"],
+        "score":    result["new_score"],
+        "end_time": result["end_time"],
+    }
+
     conn    = pika.BlockingConnection(pika.URLParameters(AMQP_URL))
     channel = conn.channel()
     channel.queue_declare(queue=TOP10_QUEUE, durable=True)
     channel.basic_publish(
         exchange="",
         routing_key=TOP10_QUEUE,
-        body=json.dumps({
-            "username": result["username"],
-            "email":    result["email"],
-            "score":    result["new_score"],
-        }),
-        properties=pika.BasicProperties(delivery_mode=2)  # mark message as persistent
+        body=json.dumps(payload),
+        properties=pika.BasicProperties(delivery_mode=2)
     )
     conn.close()
 
-    return result["message"]
+    return client_msg
 
 @app.on_event("startup")
 def startup_event():

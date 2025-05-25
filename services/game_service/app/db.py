@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 mongo_uri = os.getenv("MONGO_URI")
-mongo_client = MongoClient(mongo_uri, server_api=ServerApi('1'))
+mongo_client = MongoClient(mongo_uri)
     
 db = mongo_client["geodb"]
 user_states = db["user_states"]

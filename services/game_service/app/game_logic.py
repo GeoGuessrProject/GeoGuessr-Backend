@@ -72,6 +72,7 @@ def end_game_for_user(username):
         "username": user["username"],
         "email": user["email"],
         "new_score": current_game["score"],
+        "end_time": current_game["end_time"].isoformat(),
         }
 
 
