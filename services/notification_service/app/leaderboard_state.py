@@ -1,5 +1,5 @@
 # leaderboard_state.py
-from db import db
+from .db import db
 
 state = db["leaderboard_state"]
 

@@ -1,6 +1,6 @@
 import os, json, pika
 from db import user_states           # same shared db.py
-from services.notification_service.app.mildertidig.mail import send_email  
+from mailer import send_email  
 from datetime import datetime
    # your existing SMTP helper
 
