@@ -4,8 +4,8 @@ Dette projekt er en GeoGuessr-lignende platform udviklet i Python (FastAPI) og S
 
 ## Tech Stack
 - **Backend**: Python (FastAPI) med microservice-arkitektur
-- **Frontend**: Svelte (Vite)
-- **Kommunikation**: REST API + RabbitMQ (message broker)
+- **Frontend**: Svelte (Vite) - integrerer med Google Maps API til billeder og kortdata
+- **Kommunikation**: REST API + RabbitMQ
 - **Databaser**: 
   - MySQL til brugerdata (auth_service)
   - MongoDB til spildata (game_service)
@@ -19,14 +19,10 @@ Dette projekt er en GeoGuessr-lignende platform udviklet i Python (FastAPI) og S
 | `game_service`       | Håndterer spildata (runde, point, historik) via MongoDB        |
 | `score_service`      | Håndterer point og leaderboard                                |
 | `notification_service` | Sender notifikationer og e-mails til brugere                |
-| `image_service`      | Integrerer med Google Maps API til billeder og kortdata       |
 | `rabbitmq`           | Message broker til kommunikation mellem services             |
 
 ## RabbitMQ
 RabbitMQ bruges som en message broker, så services kan kommunikere decentralt. Eksempler:
 - Når en bruger logger ind, sender `auth_service` en besked til `game_service` for at opdatere login-tid.
-- Events som `"user_registered"` eller `"user_logged_in"` håndteres via køen `auth_events`.
+- Events som `"user_registered"` eller `"user_logged_in"` håndteres via queue `auth_events`.
 
-
-## Diagrammer
-Se `diagrams/`-mappen for arkitektur- og flow-diagrammer.

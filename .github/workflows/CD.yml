@@ -16,7 +16,6 @@ env:                          # Global constants
   SERVICES: |
     auth_service
     game_service
-    image_service
     notification_service
     score_service
   # immutable tag == commit SHA (handy for rollbacks)
@@ -71,7 +70,7 @@ jobs:
       run: |
         set -euo pipefail
         kubectl apply -f kubernetes/
-        for d in auth-service game-service image-service notification-service score-service; do
+        for d in auth-service game-service notification-service score-service; do
           echo "⏳ Waiting for $d rollout…"
           kubectl rollout status deployment/$d --timeout=90s
         done
