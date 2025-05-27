@@ -6,7 +6,8 @@
 1. **Prerequisites:**  
     Ensure you have Docker and Docker Compose installed.
 
-2. **Have the right .env file setup:**
+2. **Setup the .env file:**
+   Remember to insert your own credentials for the diffrent services
 ```bash
 RABBITMQ_HOST=xxxxx
 RABBITMQ_DEFAULT_USER=xxxxx
