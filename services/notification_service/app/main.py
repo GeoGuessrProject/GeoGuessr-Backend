@@ -11,21 +11,17 @@ app = FastAPI()
 AMQP_URL    = os.getenv("AMQP_URL")
 TOP10_QUEUE = "top10-notify"
 
-# 1) Enable CORS for your frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # or ["*"] for dev
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# 2) A simple health-check so GET / returns 200
-@app.get("/")
-def index():
-    return {"message": "Connected"}
-
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 def run_consumer():
     conn    = pika.BlockingConnection(pika.URLParameters(AMQP_URL))
