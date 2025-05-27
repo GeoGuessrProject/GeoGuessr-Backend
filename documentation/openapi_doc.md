@@ -1,4 +1,4 @@
-# OpenAPi REST API Documentation
+# OpenAPI REST API Documentation
 
 For each microservice in our system we have a seperate FastAPI app setup, running on different ports. 
 When we create a FastAPI app, it automatically generates an OpenAPI schema and serves it in 2 ways.
