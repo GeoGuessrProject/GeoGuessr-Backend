@@ -1,0 +1,8 @@
+Hej {username},
+
+Tillykke! Du har slået din tidligere highscore med {score} point!
+
+Fantastisk arbejde — fortsæt det gode spil!
+
+Mvh,  
+GeoGuessr Teamet

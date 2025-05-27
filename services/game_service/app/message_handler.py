@@ -14,10 +14,11 @@ RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "rabbitmq")
 
 def handle_user_registered(data):
     username = data["username"]
+    email = data["email"]
     print(f"[GAME SERVICE] User registered: {username}")
     
     if not user_states.find_one({"username": username}):
-        user_states.insert_one(new_user_profile(username))
+        user_states.insert_one(new_user_profile(username, email))
         print(f"[GAME SERVICE] Initialized profile for {username}")
 
 

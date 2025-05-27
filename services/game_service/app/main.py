@@ -1,3 +1,4 @@
+import os, json, pika
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.message_handler import start_consumer_thread
@@ -5,6 +6,9 @@ from app.db import user_states
 from app.game_logic import get_user, start_game_for_user, update_guess, end_game_for_user
 
 app = FastAPI()
+
+AMQP_URL    = os.getenv("AMQP_URL")
+TOP10_QUEUE = "top10-notify"
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,7 +47,31 @@ async def make_guess(username: str, request: Request):
 
 @app.post("/user/{username}/end-game")
 def end_game(username: str):
-    return end_game_for_user(username)
+
+    result = end_game_for_user(username)
+
+    client_msg = {"message": result["message"]}
+
+     # RabbitMQ payload
+    payload = {
+        "username": result["username"],
+        "email":    result["email"],
+        "score":    result["new_score"],
+        "end_time": result["end_time"],
+    }
+
+    conn    = pika.BlockingConnection(pika.URLParameters(AMQP_URL))
+    channel = conn.channel()
+    channel.queue_declare(queue=TOP10_QUEUE, durable=True)
+    channel.basic_publish(
+        exchange="",
+        routing_key=TOP10_QUEUE,
+        body=json.dumps(payload),
+        properties=pika.BasicProperties(delivery_mode=2)
+    )
+    conn.close()
+
+    return client_msg
 
 @app.on_event("startup")
 def startup_event():

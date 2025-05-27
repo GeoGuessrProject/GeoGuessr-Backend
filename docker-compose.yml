@@ -14,7 +14,7 @@ services:
       retries: 5
     networks:
       - backend-net
-
+      
   mysql:
     image: mysql:8.0
     ports:

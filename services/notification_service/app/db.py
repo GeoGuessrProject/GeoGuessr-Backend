@@ -6,7 +6,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 mongo_uri = os.getenv("MONGO_URI")
-mongo_client = MongoClient(mongo_uri)
-    
+mongo_client = MongoClient(mongo_uri, server_api=ServerApi('1'))
+
 db = mongo_client["geodb"]
-user_states = db["user_states"]
+
+# Only access collections relevant for this service:
+user_states = db["user_states"]    # new collection you asked for
+
