@@ -6,20 +6,47 @@
 1. **Prerequisites:**  
     Ensure you have Docker and Docker Compose installed.
 
-2. **Start all backend services:**
+   1.1. ***Have the right .env file setup:***
+    ```bash
+    RABBITMQ_HOST=xxxxx
+    RABBITMQ_DEFAULT_USER=xxxxx
+    RABBITMQ_DEFAULT_PASS=xxxxx
+    
+    MYSQL_USER=xxxxx
+    MYSQL_PASSWORD=xxxxx
+    MYSQL_ROOT_PASSWORD=xxxxx
+    MYSQL_DATABASE=xxxxx
+    MYSQL_HOST=xxxxx
+    MYSQL_PORT=xxxxx
+    
+    JWT_SECRET_KEY=xxxxx
+    
+    MONGO_URI=xxxxx
+    
+    AMQP_URL=xxxxx
+    
+    EMAIL_USER=xxxxx
+    EMAIL_PASS=xxxxx
+    EMAIL_HOST = xxxxx
+    EMAIL_PORT = xxxxx
+    ```
+
+3. **Start all backend services:**
     ```bash
     docker compose up --build -d
     ```
 
-3. **(Optional) Start monitoring services only:**
+4. **(Optional) Start monitoring services only:**
     ```bash
     docker-compose -f docker-compose.monitoring.yml up --build -d
     ```
 
-4. **Start backend and monitoring together:**
+5. **Start backend and monitoring together:**
     ```bash
     docker-compose -f docker-compose.yml -f docker-compose.monitoring.yml up --build -d
     ```
+
+
 
 **Service Endpoints:**
 - Backend: [http://localhost:8000](http://localhost:8000)
