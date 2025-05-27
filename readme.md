@@ -6,30 +6,30 @@
 1. **Prerequisites:**  
     Ensure you have Docker and Docker Compose installed.
 
-   1.1. ***Have the right .env file setup:***
-    ```bash
-    RABBITMQ_HOST=xxxxx
-    RABBITMQ_DEFAULT_USER=xxxxx
-    RABBITMQ_DEFAULT_PASS=xxxxx
-    
-    MYSQL_USER=xxxxx
-    MYSQL_PASSWORD=xxxxx
-    MYSQL_ROOT_PASSWORD=xxxxx
-    MYSQL_DATABASE=xxxxx
-    MYSQL_HOST=xxxxx
-    MYSQL_PORT=xxxxx
-    
-    JWT_SECRET_KEY=xxxxx
-    
-    MONGO_URI=xxxxx
-    
-    AMQP_URL=xxxxx
-    
-    EMAIL_USER=xxxxx
-    EMAIL_PASS=xxxxx
-    EMAIL_HOST = xxxxx
-    EMAIL_PORT = xxxxx
-    ```
+2. **Have the right .env file setup:**
+```bash
+RABBITMQ_HOST=xxxxx
+RABBITMQ_DEFAULT_USER=xxxxx
+RABBITMQ_DEFAULT_PASS=xxxxx
+
+MYSQL_USER=xxxxx
+MYSQL_PASSWORD=xxxxx
+MYSQL_ROOT_PASSWORD=xxxxx
+MYSQL_DATABASE=xxxxx
+MYSQL_HOST=xxxxx
+MYSQL_PORT=xxxxx
+
+JWT_SECRET_KEY=xxxxx
+
+MONGO_URI=xxxxx
+
+AMQP_URL=xxxxx
+
+EMAIL_USER=xxxxx
+EMAIL_PASS=xxxxx
+EMAIL_HOST = xxxxx
+EMAIL_PORT = xxxxx
+```
 
 3. **Start all backend services:**
     ```bash
