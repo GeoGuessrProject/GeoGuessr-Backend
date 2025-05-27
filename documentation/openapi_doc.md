@@ -5,9 +5,11 @@ When we create a FastAPI app, it automatically generates an OpenAPI schema and s
 
 1. Interactive docs with Swagger UI:
 `http://localhost:8000/docs`
+![docs](gifs/OpenAPI_docs.gif)
 
 3. Raw OpenAPI JSON:
 `http://localhost:$PORT/openapi.json`
+![json](gifs/OpenAPI_json.gif)
 
 To access the documentation for each service, we enter the correct port and can then see the REST API documentation.
 
