@@ -15,18 +15,6 @@ services:
     networks:
       - backend-net
 
-  # mongo:
-  #   image: mongo
-  #   ports:
-  #     - "27017:27017"
-  #   healthcheck:
-  #     test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #   networks:
-  #     - backend-net
-
   mysql:
     image: mysql:8.0
     ports:

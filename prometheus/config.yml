@@ -1,0 +1,8 @@
+global:
+  resolve_timeout: 10s
+
+route:
+  receiver: default
+
+receivers:
+  - name: default
