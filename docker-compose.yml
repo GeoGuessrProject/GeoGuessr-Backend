@@ -14,23 +14,11 @@ services:
       retries: 5
     networks:
       - backend-net
-
-  mongo:
-    image: mongo
-    ports:
-      - "27017:27017"
-    healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - backend-net
-
+      
   mysql:
     image: mysql:8.0
     ports:
-      - "3307:3306"
+      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: geodb
@@ -44,6 +32,7 @@ services:
 
   auth_service:
     build: ./services/auth_service
+    image: vhanert/geoguessr-backend-auth_service:latest
     ports:
       - "8001:8000"
     volumes:
@@ -66,6 +55,7 @@ services:
 
   game_service:
     build: ./services/game_service
+    image: vhanert/geoguessr-backend-game_service:latest
     ports:
       - "8002:8000"
     volumes:
@@ -78,22 +68,9 @@ services:
     networks:
       - backend-net
 
-  image_service:
-    build: ./services/image_service
-    ports:
-      - "8003:8000"
-    volumes:
-      - ./services/image_service:/app
-    env_file:
-      - .env
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - backend-net
-
   score_service:
     build: ./services/score_service
+    image: vhanert/geoguessr-backend-score_service:latest
     ports:
       - "8004:8000"
     volumes:
@@ -108,6 +85,7 @@ services:
 
   notification_service:
     build: ./services/notification_service
+    image: vhanert/geoguessr-backend-notification_service:latest
     ports:
       - "8005:8000"
     volumes:

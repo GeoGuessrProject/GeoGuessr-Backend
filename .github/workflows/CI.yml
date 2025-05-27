@@ -1,4 +1,4 @@
-name: GeoGuessr-Backend
+name: Continuous Integration (CI)
 
 on:
   push: # Runs on every push or pull request to the main branch.
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy: # Runs the same set of steps for each service:
       matrix:
-        service: [auth_service, game_service, score_service, image_service, notification_service]
+        service: [auth_service, game_service, score_service, notification_service]
 
     # Steps for each service:
     steps:

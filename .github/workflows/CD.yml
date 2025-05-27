@@ -1,0 +1,76 @@
+name: Build & Deploy to AKS   # CI + CD in one job
+
+# ──────────────────────────────────────────────────────────────
+on:
+  push:
+    branches: [main]          # Deploy every commit on main
+  workflow_dispatch:          # Manual trigger (optional)
+
+# ──────────────────────────────────────────────────────────────
+env:                          # Global constants
+  ACR_NAME: geoguessr
+  ACR_LOGIN_SERVER: geoguessr.azurecr.io
+  RESOURCE_GROUP: geogussrResourceGroup
+  CLUSTER_NAME: geoguessrCluster
+  # All services that need a custom image (one per line)
+  SERVICES: |
+    auth_service
+    game_service
+    notification_service
+    score_service
+  # immutable tag == commit SHA (handy for rollbacks)
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30       # Fail fast if something hangs
+
+    steps:
+    # 1️⃣ Checkout
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 2️⃣ Enable Buildx (multi-arch builder)
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    # 3️⃣ Log in to ACR with admin user + secret
+    - name: Docker login to ACR
+      run: |
+        echo "${{ secrets.ACR_PASSWORD }}" \
+        | docker login ${{ env.ACR_LOGIN_SERVER }} \
+               --username "${{ secrets.ACR_USERNAME }}" \
+               --password-stdin
+
+    # 4️⃣ Build & push each micro-service (linux/amd64)
+    - name: Build & push images
+      shell: bash
+      run: |
+        set -euo pipefail
+        while IFS= read -r svc || [[ -n "$svc" ]]; do
+          [[ -z "$svc" ]] && continue
+          echo "🚀 Building $svc ..."
+          docker buildx build \
+            --platform linux/amd64 \
+            -t $ACR_LOGIN_SERVER/geoguessr-backend-${svc}:latest \
+            -t $ACR_LOGIN_SERVER/geoguessr-backend-${svc}:${IMAGE_TAG} \
+            ./services/${svc} \
+            --push
+        done <<< "$SERVICES"
+
+    # 5️⃣ Create kubeconfig file from secret
+    - name: Write kubeconfig
+      run: |
+        echo "${{ secrets.KUBECONFIG_DATA }}" > $HOME/aks-kubeconfig.yaml
+        echo "KUBECONFIG=$HOME/aks-kubeconfig.yaml" >> $GITHUB_ENV
+
+    # 6️⃣ Deploy manifests & wait for roll-outs
+    - name: kubectl apply
+      run: |
+        set -euo pipefail
+        kubectl apply -f kubernetes/
+        for d in auth-service game-service notification-service score-service; do
+          echo "⏳ Waiting for $d rollout…"
+          kubectl rollout status deployment/$d --timeout=90s
+        done

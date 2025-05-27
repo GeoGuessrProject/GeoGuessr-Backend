@@ -20,6 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # 2) A simple health-check so GET / returns 200
 @app.get("/")
 def index():
@@ -55,3 +56,7 @@ def on_message(ch, method, props, body):
 
     # ack the message
     ch.basic_ack(delivery_tag=method.delivery_tag)
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
