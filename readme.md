@@ -1,33 +1,52 @@
-# DLS Exam Project
 
-### Formål
+# GeoGuessr Project – Quick Start Guide
 
-### Hvad gør vi brug af:
-    Frontend: 
-        - Azure: Til hosting
-        - Svelte: UI Framework
-        - Google Maps API: Til vores spil så der er billeder og streetview
+## 🚀 Starting the Backend (All Services)
 
-    Backend:
-        - MongoDB: Raw game data
-        - MySQL: User data (Username, Password, Email)
-        - MySQL: Ydeligere user data (Alt andet relevant userdata, spil, rekorder, osv...)
-        - Kubernetes: To be continued...
-        - Docker: To be continued...
-        - Python sessions: Hosting game
-        - Email: Sende mails afsted hvis din rekord slås
-        - RabbitMQ: Handles  meddelser
+1. **Prerequisites:**  
+    Ensure you have Docker and Docker Compose installed.
 
-    
-### Microservies 
-    - User Auth: Checks user authentication, both credentials and creates new users
-    - Leaderboard: Saves top 10 games, inlcuding score and user.
-    - Notification: Sends email to users, based on leaderboard conditions.
-    - Dead letter queue: Saves data (Idk how to describe)
-    - Map and image processing: Gets  and confirms random street maps location (maybe map cache search, too save map locations, for less calls)
-    - https://huggingface.co/datasets/osv5m/osv5m (For random location data, lon & lat that we can send to Google Street API to save calls)
-    - Save User Relevant Game Data: Handles game and user data, then asserts what is relevant to save in the database.
+2. **Start all backend services:**
+    ```bash
+    docker compose up --build -d
+    ```
 
+3. **(Optional) Start monitoring services only:**
+    ```bash
+    docker-compose -f docker-compose.monitoring.yml up --build -d
+    ```
 
+4. **Start backend and monitoring together:**
+    ```bash
+    docker-compose -f docker-compose.yml -f docker-compose.monitoring.yml up --build -d
+    ```
 
-    
+**Service Endpoints:**
+- Backend: [http://localhost:8000](http://localhost:8000)
+- RabbitMQ: [http://localhost:15672](http://localhost:15672) (default login: `guest`/`guest`)
+- MySQL: [localhost:3306](http://localhost:3306)
+- Monitoring Prometheus: [http://localhost:9090](http://localhost:9090)
+---
+
+## 🌐 Accessing the Frontend
+
+- The frontend is deployed and available at (but you still ned backend running locally):
+  [https://geoguessr-project.netlify.app/](https://geoguessr-project.netlify.app/)
+
+---
+
+## 🛠️ Running the Frontend Locally
+
+1. **Prerequisites:**  
+    Install [Node.js](https://nodejs.org/) and npm.
+
+2. **Clone the frontend repository:**  
+    [https://github.com/GeoGuessrProject/Geoguessr-Frontend](https://github.com/GeoGuessrProject/Geoguessr-Frontend)
+
+3. **Install dependencies and start the development server:**
+    ```bash
+    npm install
+    npm run dev
+    ```
+
+- The frontend will be available at [http://localhost:5173](http://localhost:5173) with live reloading via Vite.
