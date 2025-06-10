@@ -5,12 +5,7 @@
 - Sørg for at have Docker og Docker Compose installeret.
 
 ```bash
-docker compose up --build -d
-```
-
-Run monitoring only (optional)
-```bash
-docker-compose -f docker-compose.monitoring.yml up --build -d
+docker-compose up --build -d
 ```
 
 Combine both commands to start backend and monitoring
